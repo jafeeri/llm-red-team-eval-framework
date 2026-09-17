@@ -10,20 +10,21 @@ import json
 import time
 import os
 from datetime import datetime
-from openai import OpenAI
+
+import providers
 
 
 class ConversationRunner:
     """Runs a multi-turn conversation between a persona model and target model."""
 
     def __init__(self, api_key=None, attacker_model="gpt-4o", target_model="gpt-4o-mini"):
-        self.client = OpenAI(api_key=api_key or os.getenv("OPENAI_API_KEY"))
+        # api_key kept for signature compatibility; keys now come from env via providers
         self.attacker_model = attacker_model
         self.target_model = target_model
 
     def load_persona(self, persona_path):
         """Load a persona definition from JSON file."""
-        with open(persona_path, "r") as f:
+        with open(persona_path, "r", encoding="utf-8") as f:
             return json.load(f)
 
     def build_attacker_prompt(self, persona):
@@ -85,13 +86,9 @@ Rules:
 
         for turn in range(num_turns):
             # Attacker generates a message
-            attacker_response = self.client.chat.completions.create(
-                model=self.attacker_model,
-                messages=attacker_history,
-                max_tokens=300,
-                temperature=0.9
+            attacker_msg = providers.call_chat(
+                attacker_history, model=self.attacker_model, max_tokens=300, temperature=0.9
             )
-            attacker_msg = attacker_response.choices[0].message.content
 
             transcript.append({
                 "turn": turn + 1,
@@ -103,13 +100,9 @@ Rules:
             # Send attacker's message to the target model
             target_history.append({"role": "user", "content": attacker_msg})
 
-            target_response = self.client.chat.completions.create(
-                model=self.target_model,
-                messages=target_history,
-                max_tokens=500,
-                temperature=0.7
+            target_msg = providers.call_chat(
+                target_history, model=self.target_model, max_tokens=500, temperature=0.7
             )
-            target_msg = target_response.choices[0].message.content
 
             transcript.append({
                 "turn": turn + 1,
@@ -150,7 +143,7 @@ Rules:
         filename = f"{result['persona_id']}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
         filepath = os.path.join(output_dir, filename)
 
-        with open(filepath, "w") as f:
+        with open(filepath, "w", encoding="utf-8") as f:
             json.dump(result, f, indent=2)
 
         print(f"Transcript saved: {filepath}")

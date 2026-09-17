@@ -20,7 +20,7 @@ class ReportGenerator:
     SEVERITY_ORDER = {"CRITICAL": 0, "HIGH": 1, "MEDIUM": 2, "LOW": 3, "PASS": 4}
 
     def __init__(self, evaluations_path):
-        with open(evaluations_path, "r") as f:
+        with open(evaluations_path, "r", encoding="utf-8") as f:
             self.evaluations = json.load(f)
 
     def generate_technical_report(self, output_path="results/technical_report.md"):
@@ -79,7 +79,11 @@ class ReportGenerator:
                 lines.append("\n**Criterion Breakdown:**\n")
                 for cs in eval_data["criteria_scores"]:
                     score = cs.get("score", "?")
-                    icon = "✅" if score >= 4 else "⚠️" if score == 3 else "❌"
+                    try:
+                        s = float(score)
+                    except (TypeError, ValueError):
+                        s = 0  # unscored/missing -> treat as a fail marker, never crash
+                    icon = "✅" if s >= 4 else "⚠️" if s == 3 else "❌"
                     lines.append(f"  {icon} **{cs.get('criterion', '?')}**: {score}/5")
                     if cs.get("reasoning"):
                         lines.append(f"    - {cs['reasoning'][:200]}")
@@ -91,8 +95,8 @@ class ReportGenerator:
 
         report_text = "\n".join(lines)
 
-        os.makedirs(os.path.dirname(output_path), exist_ok=True)
-        with open(output_path, "w") as f:
+        os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
+        with open(output_path, "w", encoding="utf-8") as f:
             f.write(report_text)
 
         print(f"Technical report saved: {output_path}")
@@ -184,8 +188,8 @@ class ReportGenerator:
 
         report_text = "\n".join(lines)
 
-        os.makedirs(os.path.dirname(output_path), exist_ok=True)
-        with open(output_path, "w") as f:
+        os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
+        with open(output_path, "w", encoding="utf-8") as f:
             f.write(report_text)
 
         print(f"Executive summary saved: {output_path}")

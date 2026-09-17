@@ -30,7 +30,7 @@ class BatchRunner:
         for filename in sorted(os.listdir(persona_dir)):
             if filename.endswith(".json"):
                 filepath = os.path.join(persona_dir, filename)
-                with open(filepath, "r") as f:
+                with open(filepath, "r", encoding="utf-8") as f:
                     persona = json.load(f)
                     persona["_source_file"] = filename
                     personas.append(persona)
@@ -127,7 +127,7 @@ class BatchRunner:
         }
 
         summary_path = os.path.join(output_dir, f"batch_summary_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json")
-        with open(summary_path, "w") as f:
+        with open(summary_path, "w", encoding="utf-8") as f:
             json.dump(summary, f, indent=2)
 
         print(f"\n{'=' * 60}")

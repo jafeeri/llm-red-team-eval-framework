@@ -22,7 +22,7 @@ def main():
     args = parser.parse_args()
 
     # Load persona
-    with open(args.persona, "r") as f:
+    with open(args.persona, "r", encoding="utf-8") as f:
         persona = json.load(f)
 
     print(f"Persona: {persona.get('name', 'unknown')} (ID: {persona.get('persona_id', 'unknown')})")
